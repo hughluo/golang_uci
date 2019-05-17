@@ -1,0 +1,16 @@
+package main
+import "fmt"
+import "strings"
+
+func main() {
+	var ipt string
+	fmt.Scan(&ipt)
+        lower_ipt := strings.ToLower(ipt)
+	if lower_ipt[0] == byte('i') && lower_ipt[len(lower_ipt)-1] == byte('n') && strings.Contains(lower_ipt, "a"){
+		fmt.Println("Found!")
+
+	} else {
+		fmt.Println("Not Found!")
+	}
+
+}
