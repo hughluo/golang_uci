@@ -12,7 +12,7 @@ import ("fmt"
 )
 
 func main() {
-	int_slice := make([]int,0 , 3)
+	int_slice := make([]int, 0, 3)
 	for {
 		var ipt string
 		fmt.Scan(&ipt)
