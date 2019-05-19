@@ -9,7 +9,7 @@
  * Animal	Food eaten	Locomotion method	Spoken sound
  * cow	        grass	        walk	           	moo
  * bird	        worms	        fly	                peep
- * snake	    mice	        slither	            hsss
+ * snake	mice	        slither	                hsss
  
  * Your program should present the user with a prompt, “>”, to indicate that the user can type a request. 
  * Your program should accept one command at a time from the user, print out a response, and print out a new prompt on a new line. 
