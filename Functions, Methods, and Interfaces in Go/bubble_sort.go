@@ -38,7 +38,6 @@ func StringToSlice(s string) []int {
 	str_sli := strings.Split(s, " ")
 	int_sli := make([]int, 0)
 	for _, e := range str_sli {
-		fmt.Printf("element is %v\n", e)
 		num, err := strconv.Atoi(e)
 		if err != nil {
 			fmt.Println(err)
