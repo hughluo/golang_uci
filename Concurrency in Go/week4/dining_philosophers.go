@@ -17,12 +17,11 @@ import (
 	"fmt"
 	"math/rand"
 	"sync"
-	"time"
 )
 
 func main() {
-	var wg sync.WaitGroup
-	//var wg2 sync.WaitGroup
+	var wgH sync.WaitGroup
+	var wgP sync.WaitGroup
 	host := Host{}
 	csticks := make([]*ChopS, 5)
 	for i := 0; i < 5; i++ {
@@ -43,18 +42,17 @@ func main() {
 		eatens[i] = make(chan bool, 1)
 		host.eatTime[i] = 0
 	}
-	host.Start(apply, permits, eatens, &wg)
+	host.start(apply, permits, eatens, &wgH)
 
 	/* 	go host.ExecApply(apply, permits, &wg)
 	   	for i := 0; i < 5; i++ {
 	   		go host.ExecEaten(i, eatens[i], &wg)
 	   	} */
-	for i, p := range philos {
-		go p.Eat(permits[i], eatens[i])
-		go p.Apply(apply)
+	for _, p := range philos {
+		p.start(permits, eatens, apply, &wgP)
 	}
-	time.Sleep(time.Second * 20)
-	//wg2.Wait()
+	//time.Sleep(time.Second * 20)
+	wgP.Wait()
 }
 
 type Host struct {
@@ -62,7 +60,7 @@ type Host struct {
 	eatTime map[int]int
 }
 
-func (h Host) Start(apply chan int, permits []chan bool, eatens []chan bool, wg *sync.WaitGroup) {
+func (h Host) start(apply chan int, permits []chan bool, eatens []chan bool, wg *sync.WaitGroup) {
 	go h.execApply(apply, permits, wg)
 
 	for i := 0; i < 5; i++ {
@@ -73,7 +71,7 @@ func (h Host) Start(apply chan int, permits []chan bool, eatens []chan bool, wg 
 func (h Host) execApply(apply chan int, permits []chan bool, wg *sync.WaitGroup) {
 	for {
 		for id := range apply {
-			fmt.Printf("Apply from %v received\n", id)
+			//fmt.Printf("Apply from %v received\n", id)
 			wg.Add(1)
 
 			var MutexEatTime sync.Mutex
@@ -96,22 +94,8 @@ func (h Host) execEaten(id int, eaten chan bool, wg *sync.WaitGroup) {
 		h.eatTime[id]++
 		MutexEatTime.Unlock()
 		wg.Done()
-		fmt.Printf("Got eaten from %v, his eat Time now is %v\n", id, h.eatTime[id])
 	}
 }
-
-/* func (h Host) IsFull(pid int) bool {
-	return h.eatTime[pid] == 3
-}
-
-func (h Host) IsAllFull(pids []int) bool {
-	for _, pid := range pids {
-		if !h.IsFull(pid) {
-			return false
-		}
-	}
-	return true
-} */
 
 type Philo struct {
 	id      int
@@ -119,7 +103,21 @@ type Philo struct {
 	rightCS *ChopS
 }
 
-func (p Philo) Eat(permit chan bool, eaten chan bool) {
+func (p Philo) start(permits []chan bool, eatens []chan bool, apply chan int, wgP *sync.WaitGroup) {
+	go p.apply(apply, wgP)
+	go p.eat(permits[p.id], eatens[p.id], wgP)
+}
+
+func (p Philo) apply(apply chan int, wgP *sync.WaitGroup) {
+	for i := 0; i < 3; i++ {
+		//fmt.Printf("Philo no. %v: Applying %vth time\n", p.id, i)
+		wgP.Add(1)
+		apply <- p.id
+		//fmt.Printf("Philo no. %v: Success applied %vth time\n", p.id, i)
+	}
+}
+
+func (p Philo) eat(permit chan bool, eaten chan bool, wgP *sync.WaitGroup) {
 	var first *ChopS
 	var second *ChopS
 	if rand.Intn(2) == 0 {
@@ -139,16 +137,9 @@ func (p Philo) Eat(permit chan bool, eaten chan bool) {
 			second.Unlock()
 			fmt.Printf("Philo no. %v: finishing eating\n", p.id)
 			eaten <- true
+			wgP.Done()
 			//fmt.Printf("Philo no. %v: true writed to eaten\n", p.id)
 		}
-	}
-}
-
-func (p Philo) Apply(apply chan int) {
-	for i := 0; i < 3; i++ {
-		//fmt.Printf("Philo no. %v: Applying %vth time\n", p.id, i)
-		apply <- p.id
-		//fmt.Printf("Philo no. %v: Success applied %vth time\n", p.id, i)
 	}
 }
 
